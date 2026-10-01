@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  name             String?
+  avatar           String?
+  googleId         String?           @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  senders          Sender[]
+  slackConnections SlackConnection[]
+}
+
+model Sender {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  emailAddress       String
+  hourlyLimit        Int      @default(200)
+  currentHourlyCount Int      @default(0)
+  lastResetAt        DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now())
+  emails             Email[]
+
+  @@index([userId])
+}
+
+model Email {
+  id             String    @id @default(uuid())
+  senderId       String
+  sender         Sender    @relation(fields: [senderId], references: [id])
+  recipient      String
+  subject        String
+  body           String
+  scheduledAt    DateTime
+  status         String    @default("PENDING") // PENDING, SENT, FAILED, DELAYED
+  sentAt         DateTime?
+  failedAt       DateTime?
+  failureReason  String?
+  idempotencyKey String?   @unique
+  bullmqJobId    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([senderId])
+  @@index([recipient])
+  @@index([idempotencyKey])
+}
+
+model SlackConnection {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  slackTeamId String
+  accessToken String
+  channelId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
