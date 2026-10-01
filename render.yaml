@@ -1,14 +1,13 @@
-services:
-  # PostgreSQL Database
-  - type: psql
-    name: reachinbox-db
+databases:
+  - name: reachinbox-db
     plan: free
     region: ohio
     databaseName: reachinbox
     user: reachinbox_user
 
+services:
   # Redis / Key Value Store
-  - type: redis
+  - type: keyvalue
     name: reachinbox-redis
     plan: free
     region: ohio
@@ -17,7 +16,7 @@ services:
   # Backend Web Service
   - type: web
     name: reachinbox-api
-    env: node
+    runtime: node
     plan: free
     region: ohio
     buildCommand: "cd backend && npm install && npm run build && npx prisma generate && npx prisma migrate deploy"
@@ -30,7 +29,7 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: reachinbox-redis
           property: connectionString
       - key: ELASTICSEARCH_URL
@@ -71,7 +70,7 @@ services:
   # BullMQ Worker Service
   - type: worker
     name: reachinbox-worker
-    env: node
+    runtime: node
     plan: free
     region: ohio
     buildCommand: "cd backend && npm install && npm run build && npx prisma generate"
@@ -83,7 +82,7 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: reachinbox-redis
           property: connectionString
       - key: ELASTICSEARCH_URL
@@ -108,7 +107,7 @@ services:
   # React Frontend
   - type: web
     name: reachinbox-frontend
-    env: static
+    runtime: static
     plan: free
     region: ohio
     buildCommand: "cd frontend && npm install && npm run build"
